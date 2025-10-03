@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=0.75" />
+<title>광고와 AI 상담 서비스에 대한 연구</title>
+<style>
+/* ===== Design Tokens ===== */
+:root{
+  --fg:#0f172a; --muted:#64748b; --line:#e5e7eb; --bg:#f8fafc; --card:#fff;
+  --brand:#2563eb; --brand-900:#1e40af; --brand-50:#eef2ff;
+  --radius:12px; --gap:20px; --shadow:0 2px 10px rgba(2,6,23,.04);
+  --h1:1.7rem; --h2:1.28rem; --small:.9rem;
+  --qcol:38%;
+}
+@media (max-width:480px){ :root{ --h1:1.58rem; --h2:1.2rem } }
+html{
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; text-rendering:optimizeLegibility;
+}
+html,body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.7 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{font-family:"Noto Sans KR","Apple SD Gothic Neo","Malgun Gothic","Segoe UI",Roboto,system-ui,Arial,sans-serif;letter-spacing:-.003em;}
+.wrap{max-width:960px;margin:40px auto;padding:0 20px}
+[hidden]{display:none!important}
+
+/* ===== Primitives ===== */
+.h1{font-size:var(--h1);font-weight:800;margin:0 0 8px}
+.h2{font-size:var(--h2);font-weight:800;margin:0 0 12px}
+.small{font-size:var(--small)} .muted{color:var(--muted)}
+.desc{font-size:1.12rem;color:#000}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:26px;margin-top:var(--gap)}
+.btnbar{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;transition:transform .06s,box-shadow .2s,border-color .2s}
+.btn:hover{box-shadow:0 1px 5px rgba(2,6,23,.08);border-color:#d0d5dd}
+.btn:active{transform:translateY(1px)} .btn[disabled]{opacity:.55;cursor:not-allowed}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.primary:hover{background:var(--brand-900);border-color:var(--brand-900)}
+.btn.danger{background:#fff7f7;border-color:#fecaca;color:#991b1b}
+.btn.danger:hover{border-color:#fca5a5}
+:where(a,button,input,textarea,.btn):focus-visible{outline:2px solid transparent;box-shadow:0 0 0 3px var(--brand-50),0 0 0 5px rgba(37,99,235,.35)}
+.pill{display:inline-block;background:var(--brand-50);border:1px solid var(--brand);color:var(--brand-900);border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:700}
+.notice{padding:12px;border:1px solid #fde68a;background:#fffbea;color:#92400e;border-radius:10px}
+.info{padding:14px;border:1px solid var(--line);background:#fcfcff;border-radius:12px}
+.progress{height:8px;background:var(--line);border-radius:999px;overflow:hidden}
+.progress>div{height:100%;background:var(--brand);width:0;transition:width .3s}
+
+/* ===== Text blocks ===== */
+.instructions p{margin:0 0 12px}
+.instructions strong{color:var(--brand-900);font-weight:800}
+.divider{height:2px;background:#111827;border-radius:2px;margin:12px 0 16px}
+
+/* ===== Table ===== */
+.grid{overflow-x:auto}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid var(--line);padding:12px;text-align:center;vertical-align:middle}
+th{background:#f9fafb;font-weight:800;border-top:2px solid var(--line)}
+.wide-likert{table-layout:fixed;width:100%}
+.wide-likert th:first-child, .wide-likert td:first-child{width:var(--qcol);text-align:left;padding-left:16px}
+.wide-likert thead .small{display:block;font-size:.80rem;line-height:1.15;color:var(--muted)}
+.wide-likert td:first-child{font-size:1.05rem;line-height:1.7}
+@media (max-width:600px){ .wide-likert td:first-child{font-size:1.07rem} }
+.wide-likert thead th{ line-height:1.25; }
+.wide-likert td input[type="radio"]{ vertical-align:middle; position:relative; top:-0.5px; }
+.wide-likert th, .wide-likert td{ min-width:0; }
+
+/* Inputs */
+label{font-weight:700}
+.pretitle{font-size:1.45rem;font-weight:900;color:#1f2937;margin:4px 0 12px}
+.prereq{display:grid;grid-template-columns:1fr 1fr 1fr;gap:34px 36px}
+@media (max-width:900px){.prereq{grid-template-columns:1fr 1fr}}
+@media (max-width:600px){.prereq{grid-template-columns:1fr}}
+.field{display:grid;gap:10px;align-content:start}
+.input{width:100%;max-width:420px;min-height:48px;padding:12px 14px;background:#fff;border:1px solid var(--line);border-radius:12px;font-size:1rem}
+.input::placeholder{color:#9aa3af;font-size:.98rem}
+.light-group{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-height:48px;display:flex;align-items:center;max-width:420px}
+.radio-col{display:flex;gap:18px;flex-wrap:wrap}
+.radio-col label{display:flex;align-items:center;gap:6px;font-size:1rem}
+input[type="radio"],input[type="checkbox"]{transform:scale(1.12);accent-color:var(--brand)}
+.input.short{max-width:160px;min-height:48px;padding:12px 14px;font-size:1rem}
+
+/* Layout bits */
+.row{display:grid;gap:14px}
+.row2{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center}
+.video-wrap{display:grid;gap:12px}
+
+/* Warn highlight */
+tr.warn td { background:#fff5f5; }
+fieldset.warn { border:2px solid #ef4444 !important; padding:12px; border-radius:10px; }
+#svcBlock.warn { border:2px solid #ef4444 !important; padding:12px; border-radius:10px; }
+.input.warn { border:2px solid #ef4444 !important; }
+.light-group.warn { border:2px solid #ef4444 !important; }
+
+/* Submit status */
+.submitStatus{margin-top:10px;font-size:.95rem}
+.submitStatus.ok{color:#166534}
+.submitStatus.err{color:#991b1b}
+
+/* ===== SD Slider (7점 의미미분: 일자형) ===== */
+.sd-row{padding:22px 8px}
+.sd-title{font-weight:900;font-size:1.08rem;margin:0 0 3px;text-align:center}
+.sd-legend{display:flex;justify-content:space-between;align-items:center;margin:6px 0 30px;font-size:.95rem;color:#374151}
+.sd-legend .left,.sd-legend .right{font-weight:700}
+.sd-track{position:relative;height:12px;background:#e5e7eb;border-radius:999px;margin:8px 0 12px}
+.sd-fill{position:absolute;left:0;top:0;height:12px;border-radius:999px;background:var(--brand)}
+.sd-handle{
+  position:absolute;top:50%;transform:translate(-50%,-50%);
+  width:26px;height:26px;border-radius:50%;
+  background:#fff;border:2px solid var(--brand);
+  box-shadow:0 1px 4px rgba(2,6,23,.12);cursor:grab;touch-action:none;
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.9rem;color:#111827;user-select:none
+}
+.sd-handle:active{cursor:grabbing}
+.sd-ticks{position:relative;margin-top:6px;display:flex;justify-content:space-between;align-items:center}
+.sd-ticks span{display:inline-block;min-width:16px;text-align:center;font-size:.85rem;color:#374151}
+
+/* 셀 전체 클릭 & 라디오 크기 */
+.wide-likert td:not(:first-child){ cursor:pointer }
+.wide-likert tr:hover td{ background:#fcfcff }
+input[type="radio"]{ transform:scale(1.2); accent-color:var(--brand) }
+
+/* ==== Slider caption (handle 위 작은 라벨) ==== */
+.sd-caption{
+  position:absolute; bottom:30px; left:50%; transform:translateX(-50%);
+  font-size:.73rem; font-weight:800; color:#111827;
+  background:#fff; border:1px solid #e5e7eb; border-radius:999px;
+  padding:2px 8px; white-space:nowrap; box-shadow:0 1px 3px rgba(2,6,23,.08);
+  pointer-events:none;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="row2">
+    <h1 class="h1">광고와 AI 상담 서비스에 대한 연구</h1>
+    <div style="min-width:200px">
+      <div class="progress"><div id="bar"></div></div>
+      <div class="muted small" id="stepLabel" aria-live="polite" style="text-align:right;margin-top:6px">1 / 8</div>
+    </div>
+  </div>
+
+  <!-- ==================== 섹션 1 ==================== -->
+  <section id="sec1">
+    <div class="card"><h2 class="h2">참여 안내문</h2></div>
+
+    <div class="card">
+      <div class="instructions" id="instr"></div>
+      <hr class="divider">
+      <div role="note" aria-label="조사자 정보" id="org"></div>
+    </div>
+
+    <div class="card">
+      <form id="form" novalidate>
+        <div class="pretitle">설문 전 필수 정보 입력</div>
+        <div class="prereq">
+                    <div class="field">
+            <label>성별</label>
+            <div class="light-group">
+              <div class="radio-col" role="radiogroup" aria-label="성별">
+                <label><input type="radio" name="gender" value="남" required> 남</label>
+                <label><input type="radio" name="gender" value="여"> 여</label>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="age">나이</label>
+            <input id="age" name="age" type="number" min="14" max="99" placeholder="예: 23" class="input short">
+          </div>
+        </div>
+      </form>
+      <div class="btnbar">
+        <button class="btn primary" data-next="1" id="next1">다음</button>
+        <button class="btn danger" data-force data-next="1">강제 진행</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 2 ==================== -->
+  <section id="sec2" class="card" hidden>
+    <h2 class="h2">광고 시청</h2>
+
+    <div class="info" style="margin-bottom:14px">
+      <div style="font-weight:800;margin-bottom:6px">브랜드 안내</div>
+      <div id="brandBox" style="line-height:1.75"></div>
+    </div>
+
+    <p class="notice" id="aiNotice" role="alert" aria-live="polite">
+      ⚠️ 안내 문구가 여기에 표시됩니다.
+    </p>
+
+    <div class="video-wrap">
+      <video id="adVideo" width="100%" height="auto" controls playsinline preload="metadata" aria-describedby="aiNotice">
+        <source id="adSrc" src="" type="video/mp4">
+        해당 브라우저는 video 태그를 지원하지 않습니다.
+      </video>
+      <div class="muted small" id="chosenInfo"></div>
+    </div>
+
+    <div class="btnbar">
+      <button class="btn" data-prev>이전</button>
+      <button class="btn primary" data-next="2" id="next2" disabled aria-disabled="true" title="영상을 끝까지 시청하면 활성화됩니다">다음</button>
+      <button class="btn danger" data-force data-next="2">강제 진행</button>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 3 ==================== -->
+  <section id="sec3" hidden>
+    <div class="card">
+      <fieldset class="row">
+        <legend><strong>1.</strong> 광고 시작 시 화면 좌측 하단에 어떤 안내 문구가 표시되었나요?</legend>
+        <label><input type="radio" name="manip1" value="전문가만" required> 광고 전문가가 100% 제작</label>
+        <label><input type="radio" name="manip1" value="전문가+AI"> 광고 전문가가 AI를 활용하여 제작</label>
+        <label><input type="radio" name="manip1" value="100%AI"> AI 100% 자동 제작</label>
+      </fieldset>
+    </div>
+
+    <div class="card">
+      <p class="desc"><strong>2.</strong> 아래 문항들은 <strong>방금 시청한 광고와 제품</strong>에 대한 평가입니다.</p>
+      <div class="grid" style="margin-top:8px">
+        <!-- 5점 척도 고정 간격 -->
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 아니다</span></th>
+              <th>2<br><span class="small">아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">그렇다</span></th>
+              <th>5<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="likertBody"></tbody>
+        </table>
+      </div>
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" data-next="3">다음</button>
+        <button class="btn danger" data-force data-next="3">강제 진행</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 4 ==================== -->
+  <section id="sec4" hidden>
+    <div class="card">
+      <p class="desc"><strong>4.</strong> 아래 문항들은 귀하의 <strong>생성형 AI에 대한 이해와 인식</strong>을 묻습니다.</p>
+      <div class="grid" style="margin-top:8px">
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 아니다</span></th>
+              <th>2<br><span class="small">아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">그렇다</span></th>
+              <th>5<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="aiLitBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <fieldset class="row">
+        <legend><strong>5.</strong> Q1. 본인의 <strong>생성형 AI 사용 경험</strong>은 어느 정도입니까?</legend>
+        <div class="radio-col">
+          <label><input type="radio" name="AIUSE" value="1" required> 전혀 사용해본 적 없음</label>
+          <label><input type="radio" name="AIUSE" value="2"> 매우 드물게 사용한다(월 1회 미만)</label>
+          <label><input type="radio" name="AIUSE" value="3"> 가끔 사용한다 (월 1회~3회)</label>
+          <label><input type="radio" name="AIUSE" value="4"> 주기적으로 사용한다(주 1회~2회)</label>
+          <label><input type="radio" name="AIUSE" value="5"> 자주 사용한다(주 3회 이상)</label>
+          <label><input type="radio" name="AIUSE" value="6"> 매우 자주 사용한다(거의 매일, 하루 1시간 미만)</label>
+          <label><input type="radio" name="AIUSE" value="7"> 항상 사용한다(거의 매일, 하루 1시간 이상)</label>
+        </div>
+      </fieldset>
+
+      <div id="svcBlock" class="row" hidden style="margin-top:12px">
+        <div><strong>Q2.</strong> 본인이 <strong>사용해 본 생성형 AI 서비스</strong>는 무엇인가요? (복수선택)</div>
+        <label><input type="checkbox" name="AIsvc" value="chat"> 텍스트/대화형 AI (ChatGPT, Gemini 등)</label>
+        <label><input type="checkbox" name="AIsvc" value="image"> 이미지 생성 AI (Midjourney, SD 등)</label>
+        <label><input type="checkbox" name="AIsvc" value="video"> 영상 생성 AI (Sora, Runway, Kling 등)</label>
+        <label><input type="checkbox" name="AIsvc" value="audio"> 음악/오디오 AI (Suno, Udio 등)</label>
+        <div class="row" style="gap:8px; margin-top:6px">
+          <label style="display:flex;align-items:center;gap:8px">
+            <input type="checkbox" name="AIsvc" value="other" id="svcOther"> 기타
+          </label>
+          <input type="text" id="svcOtherText" class="input" placeholder="기타 서비스명" disabled style="max-width:420px">
+        </div>
+      </div>
+
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" data-next="4" id="toR2">다음</button>
+        <button class="btn danger" data-force data-next="4">강제 진행</button>
+      </div>
+      <div class="submitStatus" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 5 ==================== -->
+  <section id="sec5" hidden>
+   <div class="card" id="r2Intro" role="status" aria-live="polite">
+      <h2 class="h2" style="margin-top:10px">이제부터는 “실제 및 AI 상담 서비스”에 관한 문항들이 제시됩니다.</h2>
+      </div>
+    <div class="card">
+      <fieldset class="row">
+        <legend><strong>Q1.</strong> 귀하는 지금까지 <u>전문 상담가에게 대면 상담을 받은</u> 경험이 있습니까?</legend>
+        <div class="radio-col">
+          <label><input type="radio" name="R2_EXP_FACE" value="1"> 전혀 없다</label>
+          <label><input type="radio" name="R2_EXP_FACE" value="2"> 1–2회</label>
+          <label><input type="radio" name="R2_EXP_FACE" value="3"> 3–5회</label>
+          <label><input type="radio" name="R2_EXP_FACE" value="4"> 6–9회</label>
+          <label><input type="radio" name="R2_EXP_FACE" value="5"> 10회 이상</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="card">
+      <fieldset class="row">
+        <legend><strong>Q2.</strong> 귀하는 지금까지 <u>전문 상담가와 온라인 상담을 받은</u> 경험이 있습니까?</legend>
+        <div class="radio-col">
+          <label><input type="radio" name="R2_EXP_ONLINE" value="1"> 전혀 없다</label>
+          <label><input type="radio" name="R2_EXP_ONLINE" value="2"> 1–2회</label>
+          <label><input type="radio" name="R2_EXP_ONLINE" value="3"> 3–5회</label>
+          <label><input type="radio" name="R2_EXP_ONLINE" value="4"> 6–9회</label>
+          <label><input type="radio" name="R2_EXP_ONLINE" value="5"> 10회 이상</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div class="card">
+      <p class="desc"><strong>Q3.</strong> 다음은 <strong>전문 상담가에게 상담을 받는 것</strong>에 대한 당신의 생각이나 기대를 묻는 질문들입니다.<br>각 문항을 잘 읽고 자신의 의견에 가장 부합하는 번호에 표시해주세요.</p>
+      <div class="grid" style="margin-top:8px">
+        <!-- 4점 척도 고정 간격 -->
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="4" style="width:calc((100% - var(--qcol))/4)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 그렇지 않다</span></th>
+              <th>2<br><span class="small">그렇지 않다</span></th>
+              <th>3<br><span class="small">그렇다</span></th>
+              <th>4<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="r2s1AttBody"></tbody>
+        </table>
+      </div>
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" data-next="5">다음</button>
+        <button class="btn danger" data-force data-next="5">강제 진행</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 6 ==================== -->
+  <section id="sec6" hidden>
+    <div class="card">
+      <p class="desc"><strong>Q4.</strong> 다음 문항들은 <strong>AI 상담을 받는 것</strong>에 대한 귀하의 의견을 묻는 것입니다.<br> 잘 읽고 귀하의 생각이나 느낌에 가장 일치하는 번호에 답해 주시기 바랍니다.</p>
+      <div class="grid">
+        <!-- 5점 척도 -->
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 아니다</span></th>
+              <th>2<br><span class="small">아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">그렇다</span></th>
+              <th>5<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="r2s2Q1Body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="desc"><strong>Q5.</strong> AI 상담을 하게 된다면, 아래 각 문항들은 <strong>얼마나 장점</strong>이라고 생각하나요?</p>
+      <div class="grid">
+        <!-- 5점 척도 -->
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 장점이 아니다</span></th>
+              <th>2<br><span class="small">장점이 아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">장점이다</span></th>
+              <th>5<br><span class="small">매우 장점이다</span></th>
+            </tr>
+          </thead>
+          <tbody id="r2s2Q2Body"></tbody>
+        </table>
+      </div>
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" data-next="6">다음</button>
+        <button class="btn danger" data-force data-next="6">강제 진행</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 7 ==================== -->
+  <section id="sec7" hidden>
+    <div class="card">
+      <p class="desc"><strong>Q6.</strong>  다음은 <strong>AI 상담사에 대한 당신의 생각이나 기대</strong>를 묻는 질문들입니다.<br>각 문항을 잘 읽고 자신의 의견에 가장 부합하는 번호에 표시해주세요</p>
+      <div class="grid">
+        <!-- 5점 척도 -->
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 아니다</span></th>
+              <th>2<br><span class="small">아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">그렇다</span></th>
+              <th>5<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="r2s2Q3Body"></tbody>
+        </table>
+      </div>
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" data-next="7">다음</button>
+        <button class="btn danger" data-force data-next="7">강제 진행</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== 섹션 8 (의미미분 슬라이더) ==================== -->
+  <section id="sec8" hidden>
+    <div class="card">
+      <p class="desc">
+        <strong>Q7.</strong> 아래의 내용들은 상담에서 다루어지는 주요 문제들입니다.<br>
+        <strong>각각의 문제는 AI 상담이 적합한지 혹은 인간 상담가(전문 상담사)가 적합</strong>하다고 생각하는지 그 정도를 표시해주세요.
+        <br><span><small class="muted">(3: 매우 적합 ~ 1: 약간 적합)</small></span>
+      </p>
+      <div class="grid">
+        <table class="compact wide-likert">
+          <thead><tr><th>항목</th></tr></thead>
+          <tbody id="r2s3Q1Body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="desc"><strong>Q2.</strong> 내가 생각할 때 <strong>AI 상담사는 ~</strong></p>
+      <div class="grid">
+        <table class="compact wide-likert">
+          <thead><tr><th>항목</th></tr></thead>
+          <tbody id="r2s3Q2Body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="desc"><strong>Q8.</strong> 앞으로 만일 귀하나 귀하의 지인에게 심리적인 어려움이 생기면 ~ </p>
+      <div class="grid">
+        <table class="compact wide-likert">
+          <colgroup>
+            <col style="width:var(--qcol)">
+            <col span="5" style="width:calc((100% - var(--qcol))/5)">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>문항</th>
+              <th>1<br><span class="small">전혀 아니다</span></th>
+              <th>2<br><span class="small">아니다</span></th>
+              <th>3<br><span class="small">보통이다</span></th>
+              <th>4<br><span class="small">그렇다</span></th>
+              <th>5<br><span class="small">매우 그렇다</span></th>
+            </tr>
+          </thead>
+          <tbody id="r2s4Q1Body"></tbody>
+        </table>
+      </div>
+
+      <div class="btnbar">
+        <button class="btn" data-prev>이전</button>
+        <button class="btn primary" id="submitBtn">설문 제출</button>
+        <button class="btn danger" id="forceSubmit">강제 제출</button>
+      </div>
+      <div class="submitStatus" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- ==================== 완료 ==================== -->
+  <section id="done" class="card" hidden>
+    <h2 class="h2">제출 완료</h2>
+    <p>응답해 주셔서 감사합니다.</p>
+    <p class="small muted" id="serverMsg"></p>
+    <pre id="dump" class="small" style="white-space:pre-wrap;background:#f0f4f7;border:1px solid var(--line);padding:12px;border-radius:10px;color:#444" hidden></pre>
+  </section>
+
+  <!-- 중간저장 안내 -->
+  <div class="small muted" id="midSaveHint" style="text-align:center;margin:20px 0 10px"></div>
+</div>
+
+<script>
+/* =======================
+   CONFIG
+   ======================= */
+const FEATURES = { SHOW_FORCE: true };
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbxtBU7CtqXQG2uo9N5uIMVaJPFgxAVAUmk1w9k9fGqyyLAG9HbW4Vjjr2eZrrVsfCEYQg/exec";
+
+/* =======================
+   텍스트/문항
+   ======================= */
+const COPY = {
+  instructions: [
+    "안녕하십니까? 귀중한 시간을 내어 설문에 참여해 주셔서 감사합니다.<br>저는 대구대학교 일반대학원 심리학과 최주형입니다.",
+    "본 설문은 광고를 시청한 후 귀하의 느낌과 AI 상담 서비스에 대한 의견을 알아보고자 하는 것입니다.",
+    "설문 과정에서는 <strong>약 20초 분량의 소리가 포함된 한 편의 광고를 시청</strong>하신 후, 이어지는 질문에 응답해주시면 됩니다. <br>전체 응답에는 <strong>약 10분</strong>정도가 소요될 것으로 예상됩니다.",
+    "제시되는 질문에는 옳고 그름이 없으므로, 평소 느끼고 생각하시는 대로 솔직하게 응답해 주시기 바랍니다.<br>자신에게 꼭 맞는 응답이 없을 경우에는 가장 가깝다고 생각되는 항목을 선택해 주시면 됩니다.",
+    "응답하신 내용은 익명으로 처리되며 연구 목적 외에는 사용되지 않습니다.<br>모든 질문에 빠짐없이 응답해 주셔야 설문이 정상적으로 제출되며, 귀하의 성실한 참여가 연구에 큰 도움이 됩니다.",
+    "귀하의 소중한 응답은 학술 연구 발전에 중요한 기여가 됩니다.<br>참여와 협조에 다시 한 번 깊이 감사드립니다."
+  ],
+  organizationHTML: `
+    <div style="font-weight:800;margin-bottom:6px">대구대학교 일반대학원 심리학과</div>
+    <ul style="margin:0;padding-left:18px">
+      <li>지도교수 박은아 (<a href="mailto:eunap@daegu.ac.kr">eunap@daegu.ac.kr</a>)</li>
+      <li>석사과정 수료 최주형 (<a href="mailto:thirdworldjoy@naver.com">thirdworldjoy@naver.com</a>)</li>
+    </ul>
+  `,
+  brandHTML: `
+    <strong>Sunshine</strong>는 매일의 순간에 신선한 빛을 전하는 주스 브랜드입니다.<br>
+    <strong>“Fresh Sunlight in Every Glass”</strong>라는 메시지처럼, 한 잔의 주스 속에 건강하고 활기찬 태양의 에너지를 담아 전달합니다.
+  `,
+  stimuli: [
+    {file:"A_H.mp4",code:"A_H",label:"⚠️ 해당 광고는 <strong>생성형 AI에 의해 100% 자동 제작</strong>된 콘텐츠입니다.<br>또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."},
+    {file:"A_L.mp4",code:"A_L",label:"⚠️ 해당 광고는 <strong>생성형 AI에 의해 100% 자동 제작</strong>된 콘텐츠입니다.<br>또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."},
+    {file:"B_H.mp4",code:"B_H",label:"⚠️ 해당 광고는 <strong>광고 전문가가 생성형 AI를 활용하여 제작</strong>한 콘텐츠입니다.<br> 또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."},
+    {file:"B_L.mp4",code:"B_L",label:"⚠️ 해당 광고는 <strong>광고 전문가가 생성형 AI를 활용하여 제작</strong>한 콘텐츠입니다.<br> 또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."},
+    {file:"C_H.mp4",code:"C_H",label:"⚠️ 해당 광고는 <strong>광고 전문가가 100% 제작</strong>한 콘텐츠입니다. 생성형 AI는 활용되지 않았습니다.<br> 또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."},
+    {file:"C_L.mp4",code:"C_L",label:"⚠️ 해당 광고는 <strong>광고 전문가가 100% 제작</strong>한 콘텐츠입니다. 생성형 AI는 활용되지 않았습니다.<br> 또한 영상에는 음성이 포함되어 있으므로, <strong>반드시 소리와 함께</strong> 시청해 주시기 바랍니다."}
+  ],
+  /* ===== 섹션3 리커트 문항 ===== */
+  likertItems:[
+    "이 광고는 전반적으로 잘 만들어졌다.",
+    "이 광고는 표현 방식이 일관된다.",
+    "이 광고는 시각적 완성도가 높다.",
+    "이 광고는 제품의 특성을 왜곡하지 않고 보여준다.",
+    "이 광고는 소비자를 속이려는 의도가 없어 보인다.",
+    "이 광고는 신뢰할 수 있다.",
+    "이 광고의 표현은 인위적이지 않고 자연스럽다.",
+    "이 광고는 기존의 광고들과는 다른 독특한 접근을 보여준다.",
+    "이 광고는 참신한 시각적 표현을 담고 있다.",
+    "이 광고는 예측하기 어려운 요소를 포함하고 있다.",
+    "이 광고는 브랜드(제품)과 관련성이 있다.",
+    "이 광고는 브랜드(제품)을 잘 표현하였다.",
+    "이 광고는 마음에 든다.",
+    "이 광고는 긍정적인 인상을 준다.",
+    "이 광고는 매력적이다.",
+    "이 광고에 나온 제품을 구매하고 싶다.",
+    "이 광고는 나의 구매 욕구를 자극한다.",
+    "나는 이 제품을 다른 사람에게 추천하고 싶다.",
+    "나는 이 광고가 독창적이라고 생각한다.",
+    "나는 이 광고의 표현 방식이 독특하다고 생각한다."
+  ],
+  aiLitItems:[
+    "나는 AI가 학습한 데이터를 활용해 글이나 이미지를 만들어낸다는 것을 알고 있다.",
+    "나는 AI가 만든 콘텐츠와 사람이 만든 콘텐츠를 비교해보고 스스로 판단할 수 있다.",
+    "나는 AI가 만든 결과물이 사실과 다른 정보를 포함하는지 파악할 수 있다.",
+    "나는 AI 결과를 활용하기 전에 그 근거와 출처를 검토할 수 있다.",
+    "나는 필요할 때 AI를 적절히 활용해 과제를 해결하거나 아이디어를 생성할 수 있다."
+  ],
+  r2s1AttItems:[
+    "나의 이미지가 좋지 않게 보일까봐 상담을 받는 것이 꺼려진다.",
+    "사람들이 문제가 있는 것으로 볼까봐 상담센터에 가는 것이 꺼려진다.",
+    "상담을 받는 사람들에 대한 사회적 인식이 좋지 않아서 상담을 받는 것이 꺼려진다."
+  ],
+  r2s2Q1Items:[
+    "나는 AI 상담에서 나를 솔직하게 드러낼 수 있을 것이다.",
+    "AI 상담은 얼굴이 보이지 않아 고민을 이야기할 때 부담이 적을 것 같다.",
+    "AI 상담사와 상담을 하더라도 실제로 상담을 받는 느낌이 들 것 같다."
+  ],
+  r2s2Q2Items:[
+    "하고 싶을 때마다 상담할 수 있다.",
+    "어디서든 상담할 수 있다.",
+    "다양한 사람들의 경험과 조언을 통합적으로 받을 수 있다.",
+    "필요한 즉시 도움을 얻을 수 있다.",
+    "나를 알리지 않고도 중요한 고민거리를 내놓을 수 있다."
+  ],
+  r2s2Q3Items:[
+    "AI 상담사는 나에게 신뢰감을 줄 것이라고 기대한다.",
+    "AI 상담사는 내가 의지할 수 있을 것이라고 기대한다.",
+    "AI 상담사는 나를 한 사람의 인간으로 존중할 것이라고 기대한다.",
+    "AI 상담사는 나에게 상냥하고 따뜻하게 대할 것이라고 기대한다.",
+    "AI 상담사는 나를 지지해 줄 것이라고 기대한다.",
+    "AI 상담사는 나에게 격려와 위로를 해줄 것이라고 기대한다.",
+    "AI 상담사는 내가 말하지 않아도 내 기분을 알 것이라고 기대한다.",
+    "AI 상담사는 내가 무엇을 해야 하는지 말해 줄 것이라고 기대한다.",
+    "AI 상담사는 내가 무엇이 문제인지 설명해 줄 것이라고 기대한다.",
+    "AI 상담사는 나를 도와주는 방법을 알고 있을 것이라고 기대한다.",
+    "AI 상담사는 내 문제를 해결하는 데 도움을 줄 것이라고 기대한다."
+  ],
+  r2s3Q1Items:[
+    "학업·진로 문제 (공부/학업, 진로·진학, 직업 선택 등)",
+    "가족 갈등·소통 문제 (부모-자녀 갈등, 형제자매 갈등, 가정 내 의사소통 어려움, 가출 등)",
+    "교우·대인관계 문제 (친구 관계, 직장·사회 관계 갈등, 새로운 환경 적응 등)",
+    "폭력·괴롭힘 문제 (신체적·언어적 폭력, 따돌림, 사이버 괴롭힘 등)",
+    "정신건강 문제 (우울, 불안, 발표·사회적 긴장, 수면곤란 등)",
+    "중독 문제 (술·담배·약물, 도박, 디지털 중독 등)",
+    "자아·정체성 문제 (열등감, 자기이해, 성격 관련 어려움, 가치관·정체성 혼란 등)",
+    "연애·성 관련 문제 (연인 관계 갈등, 성 관련 고민, 친밀감 부족 등)",
+    "외로움 문제 (사회적 고립감, 정서적 외로움 등)",
+    "생활습관 문제 (체중조절/식습관, 여가·취미 활용, 생활 균형 등)"
+  ],
+  r2s3Q2Items:[
+    "모호하다 ~ 명쾌하다",
+    "비전문적이다 ~ 전문적이다",
+    "상담을 못한다 ~ 상담을 잘 한다",
+    "통찰력이 없다 ~ 통찰력이 있다",
+    "거리감이 느껴진다 ~ 친밀감이 느껴진다",
+    "차갑다 ~ 따뜻하다",
+    "호감이 안 간다 ~ 호감이 간다",
+    "의심스럽다 ~ 믿을만하다",
+    "신뢰할 수 없다 ~ 신뢰할 만하다"
+  ],
+  r2s4Q1Items:[
+    "나는 AI 상담사에게 상담받을 의향이 있다.",
+    "나에게 심리적인 어려움이 생기면 AI 상담을 이용할 의향이 있다.",
+    "내 주변 사람들(가족,친구 등)이 심리적 어려움을 겪으면 AI 상담을 이용하도록 권유할 것이다."
+  ]
+};
+
+/* =======================
+   유틸
+   ======================= */
+const $  = (s,sc=document)=>sc.querySelector(s);
+const $$ = (s,sc=document)=>[...sc.querySelectorAll(s)];
+const uuid = ()=>'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+  const r=crypto.getRandomValues(new Uint8Array(1))[0]&15; const v=c==='x'?r:(r&0x3|0x8); return v.toString(16);
+});
+function postJSON(url, data, {timeoutMs=10000, retries=2}={}) {
+  const body = "data=" + encodeURIComponent(JSON.stringify(data));
+  return (async ()=>{
+    for(let attempt=0; attempt<=retries; attempt++){
+      const ac = new AbortController(); const t = setTimeout(()=>ac.abort(), timeoutMs);
+      try{
+        const res = await fetch(url, {
+          method:"POST",
+          headers:{ "Content-Type":"application/x-www-form-urlencoded;charset=UTF-8" },
+          body, credentials:"omit", cache:"no-store", signal: ac.signal
+        });
+        clearTimeout(t);
+        const text = await res.text();
+        let json = null; try{ json = JSON.parse(text); } catch(e){}
+        if(!res.ok) throw new Error(`HTTP ${res.status}`);
+        return { ok:true, json, text };
+      }catch(err){
+        clearTimeout(t);
+        if(attempt===retries) return { ok:false, error:String(err) };
+        await new Promise(r=>setTimeout(r, 400*(attempt+1)));
+      }
+    }
+  })();
+}
+
+/* =======================
+   App
+   ======================= */
+const App = {
+  state: {
+    steps: ["sec1","sec2","sec3","sec4","sec5","sec6","sec7","sec8"],
+    cur: 0,
+    counters: { QUAL_MC:0, AUTH:0, ORIG:0, ORIG_MC:0, ATT:0, PI:0 },
+    watched95: false,
+    midSaved: false,
+    submitted: false,
+    dirty: false, // ★ 변경 감지 플래그
+    SESSION_ID: sessionStorage.getItem("sess_id") || (sessionStorage.setItem("sess_id", uuid()), sessionStorage.getItem("sess_id")),
+    chosen: null
+  },
+
+  init(){
+    this.copy.inject();
+    this.render.tables();
+    this.slider.initRows();
+    this.stimulus.pickAndMount();
+    this.navigation.bind();
+    this.features.apply();
+    this.formPrefill();
+    this.render.intent3();
+    this.navigation.updateStepUI();
+
+    // 셀 클릭 = 라디오 체크
+    document.addEventListener('click', (e)=>{
+      const td = e.target.closest('td');
+      if(!td) return;
+      const table = td.closest('table.wide-likert');
+      if(!table || td.cellIndex === 0) return;
+      const radioInCell = td.querySelector('input[type="radio"]');
+      if(radioInCell){
+        radioInCell.checked = true;
+        radioInCell.dispatchEvent(new Event('change', {bubbles:true}));
+        return;
+      }
+      const tr = td.parentElement;
+      const idx = td.cellIndex + 1;
+      const peer = tr.querySelector(`td:nth-child(${idx}) input[type="radio"]`);
+      if(peer){
+        peer.checked = true;
+        peer.dispatchEvent(new Event('change', {bubbles:true}));
+      }
+    });
+
+    // 기타 체크 시 텍스트 활성/비활성
+    document.addEventListener('change', (e)=>{
+      if(e.target && e.target.id === 'svcOther'){
+        const txt = document.getElementById('svcOtherText');
+        const checked = e.target.checked;
+        txt.disabled = !checked;
+        txt.value = checked ? txt.value : "";
+        if(!checked) txt.classList.remove('warn');
+      }
+    });
+
+    /* ==== 변경 감지 & 자동 저장 & 이탈 경고 바인딩 ==== */
+    document.addEventListener('input', ()=>{ App.state.dirty = true; }, {capture:true});
+    document.addEventListener('change', ()=>{ App.state.dirty = true; }, {capture:true});
+
+    // 30초마다 자동 임시 저장
+    setInterval(()=>App.autoSaveDraft(), 30000);
+
+    // 탭/창이 숨겨질 때 자동 임시 저장
+    document.addEventListener('visibilitychange', ()=>{
+      if (document.visibilityState === 'hidden') App.autoSaveDraft();
+    });
+
+    // 페이지 이탈 경고 (제출 완료 전 & dirty인 경우)
+    window.addEventListener('beforeunload', (e)=>{
+      const blocking = !App.state.submitted && App.state.dirty;
+      if (blocking) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    });
+  },
+
+  copy:{ inject(){ $("#instr").innerHTML = COPY.instructions.map(p=>`<p>${p}</p>`).join(""); $("#org").innerHTML = COPY.organizationHTML; $("#brandBox").innerHTML = COPY.brandHTML; } },
+
+  render:{
+    tables(){
+      const items = COPY.likertItems.slice();
+      const GROUPS = [
+        "QUAL_MC","QUAL_MC","QUAL_MC",
+        "AUTH","AUTH","AUTH","AUTH",
+        "ORIG","ORIG","ORIG","ORIG","ORIG",
+        "ATT","ATT","ATT",
+        "PI","PI","PI",
+        "ORIG_MC","ORIG_MC"
+      ];
+      const ct = App.state.counters;
+      $("#likertBody").innerHTML = items.map((t,i)=>{
+        const g = GROUPS[i]; ct[g] = (ct[g]||0) + 1; const name = g + ct[g];
+        return `<tr data-name="${name}"><td>${t}</td>${
+          Array.from({length:5},(_,k)=>`<td><input type="radio" name="${name}" value="${k+1}"></td>`).join("")
+        }</tr>`;
+      }).join("");
+
+      $("#aiLitBody").innerHTML = COPY.aiLitItems.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:5},(_,k)=>`<td><input type="radio" name="AILIT${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+
+      $("#r2s1AttBody").innerHTML = COPY.r2s1AttItems.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:4},(_,k)=>`<td><input type="radio" name="R2S1_ATT${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+
+      $("#r2s2Q1Body").innerHTML = COPY.r2s2Q1Items.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:5},(_,k)=>`<td><input type="radio" name="R2S2_Q1_${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+      $("#r2s2Q2Body").innerHTML = COPY.r2s2Q2Items.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:5},(_,k)=>`<td><input type="radio" name="R2S2_Q2_${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+      $("#r2s2Q3Body").innerHTML = COPY.r2s2Q3Items.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:5},(_,k)=>`<td><input type="radio" name="R2S2_Q3_${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+    },
+    intent3(){
+      $("#r2s4Q1Body").innerHTML = COPY.r2s4Q1Items.map((t,i)=>
+        `<tr><td>${t}</td>${Array.from({length:5},(_,k)=>`<td><input type="radio" name="R2S4_Q1_${i+1}" value="${k+1}"></td>`).join("")}</tr>`
+      ).join("");
+    }
+  },
+
+  slider:{
+    SCALE:  [-3,-2,-1,0,1,2,3],
+    TICKS:  [3, 2, 1, 0, 1, 2, 3],
+    CAPTION: { 3:"매우 적합", 2:"적합", 1:"약간 적합", 0:"← 보통 →" },
+    valueToIndex(v){ const i = this.SCALE.indexOf(Number(v)); return (i>=0? i : 3); },
+    indexToValue(i){ return this.SCALE[Math.min(6, Math.max(0, i))]; },
+    indexToPercent(i){ return (i/6)*100; },
+    captionForValue(v){ const abs = Math.abs(Number(v)); return this.CAPTION[abs] || ""; },
+    addRow({name, titleHTML, leftLabel, rightLabel, mountTbody, initial=0, showCaption=true}){
+      const tr = document.createElement("tr");
+      const td = document.createElement("td"); td.colSpan=1;
+
+      const row = document.createElement("div");
+      row.className = "sd-row";
+      const titleId = `${name}-title`;
+
+      const initIdx = this.valueToIndex(initial);
+      const initPct = this.indexToPercent(initIdx);
+      const initCaption = this.captionForValue(initial);
+
+      row.innerHTML = `
+        <div class="sd-title" id="${titleId}">${titleHTML||""}</div>
+        <div class="sd-legend">
+          <div class="left">${leftLabel}</div>
+          <div class="right">${rightLabel}</div>
+        </div>
+
+        <div class="sd-track"
+             role="slider"
+             aria-valuemin="-3" aria-valuemax="3" aria-valuenow="${initial}"
+             aria-label="${name}" aria-labelledby="${titleId}"
+             tabindex="0">
+          <div class="sd-fill" style="width:${initPct}%"></div>
+          <div class="sd-handle" style="left:${initPct}%">
+            <span class="sd-caption" ${(showCaption && initCaption) ? "" : "style='display:none'"}>${showCaption ? initCaption : ""}</span>
+          </div>
+        </div>
+        <div class="sd-ticks">${this.TICKS.map(v=>`<span>${v}</span>`).join('')}</div>
+        <input type="hidden" name="${name}" value="${initial}">
+      `;
+
+      td.appendChild(row); tr.appendChild(td); mountTbody.appendChild(tr);
+
+      const track    = row.querySelector(".sd-track");
+      const handle   = row.querySelector(".sd-handle");
+      const fill     = row.querySelector(".sd-fill");
+      const hidden   = row.querySelector(`input[name='${name}']`);
+      const caption  = row.querySelector(".sd-caption");
+
+      const setByIndex = (idx)=>{
+        const i = Math.min(6, Math.max(0, idx));
+        const val = this.indexToValue(i);
+        const pct = this.indexToPercent(i);
+        handle.style.left = pct + "%";
+        fill.style.width  = pct + "%";
+        hidden.value = String(val);
+        track.setAttribute("aria-valuenow", String(val));
+        const cap = this.captionForValue(val);
+        if (showCaption && cap){ caption.textContent = cap; caption.style.display = ""; }
+        else { caption.style.display = "none"; }
+      };
+
+      const snapToPx = (px)=>{
+        const r = track.getBoundingClientRect();
+        const x = Math.min(Math.max(px - r.left, 0), r.width);
+        const ratio = x / r.width;
+        const idx = Math.round(ratio * 6);
+        setByIndex(idx);
+      };
+
+      track.addEventListener("pointerdown", (e) => {
+        track.setPointerCapture(e.pointerId);
+        snapToPx(e.clientX);
+        const move = ev => snapToPx(ev.clientX);
+        const up   = () => {
+          track.releasePointerCapture(e.pointerId);
+          track.removeEventListener("pointermove", move);
+          track.removeEventListener("pointerup", up);
+        };
+        track.addEventListener("pointermove", move);
+        track.addEventListener("pointerup", up);
+      });
+
+      track.addEventListener("keydown", (e) => {
+        const curVal = Number(hidden.value || 0);
+        const curIdx = this.valueToIndex(curVal);
+        if(e.key === "ArrowLeft" || e.key === "ArrowDown"){ e.preventDefault(); setByIndex(curIdx - 1); }
+        if(e.key === "ArrowRight" || e.key === "ArrowUp"){ e.preventDefault(); setByIndex(curIdx + 1); }
+      });
+
+      setByIndex(initIdx);
+    },
+
+    initRows(){
+      const body1 = $("#r2s3Q1Body"); body1.innerHTML="";
+      COPY.r2s3Q1Items.forEach((full, i) => {
+        let cat = full, ex = ""; const m = full.match(/^(.*?)\s*\((.*)\)\s*$/);
+        if (m) { cat = m[1].trim(); ex = m[2].trim(); }
+        const titleHTML = ex
+          ? `<div class="cat">${cat}</div><div class="ex" style="color:#6b7280;font-size:.9rem;margin-top:2px">(${ex})</div>`
+          : `<div class="cat">${cat}</div>`;
+        this.addRow({
+          name:`R2S3_Q1_${i+1}`,
+          titleHTML,
+          leftLabel:"AI 상담사",
+          rightLabel:"인간(전문) 상담사",
+          mountTbody: body1,
+          initial: 0
+        });
+      });
+
+      const body2 = $("#r2s3Q2Body"); body2.innerHTML="";
+      COPY.r2s3Q2Items.forEach((txt, i) => {
+        const [left, right] = txt.split("~").map(s=>s.trim());
+        const titleHTML = `AI 상담사는 ${left} ↔ ${right}`;
+        this.addRow({
+          name:`R2S3_Q2_${i+1}`,
+          titleHTML,
+          leftLabel:left,
+          rightLabel:right,
+          mountTbody: body2,
+          initial: 0,
+          showCaption: false
+        });
+      });
+    }
+  },
+
+  stimulus:{
+    pickAndMount(){
+      const arr = COPY.stimuli.slice();
+      const pick = new URLSearchParams(location.search).get("pick");
+      const chosen = arr.find(s=>s.code===pick) || arr[Math.floor(Math.random()*arr.length)];
+      App.state.chosen = chosen;
+
+      $("#adSrc").src = chosen.file; $("#adVideo").load();
+      $("#aiNotice").innerHTML = chosen.label;
+
+      const next2 = $("#next2");
+      const unlock = ()=>{ App.state.watched95=true; next2.disabled=false; next2.title=""; };
+      $("#adVideo").addEventListener("timeupdate",e=>{
+        const v=e.target;if(!v.duration) return; if(v.currentTime/v.duration>=.95) unlock();
+      });
+      $("#adVideo").addEventListener("ended",unlock);
+    }
+  },
+
+  navigation:{
+    bind(){
+      document.addEventListener("click",(e)=>{
+        const prevBtn  = e.target.closest("[data-prev]");
+        const nextBtn  = e.target.closest("[data-next]");
+        const forceBtn = e.target.closest("[data-force]");
+
+        if(prevBtn){ e.preventDefault(); App.navigation.go(Math.max(App.state.cur-1,0)); return; }
+
+        if(forceBtn){
+          e.preventDefault();
+          const target = +forceBtn.dataset.next;
+          App.navigation.onNext(target, {skipValidation:true});
+          return;
+        }
+
+        if(!nextBtn) return;
+        e.preventDefault();
+        const target = +nextBtn.dataset.next;
+        App.navigation.onNext(target, {skipValidation:false, guardId: nextBtn.id});
+      });
+
+      $("#submitBtn")?.addEventListener("click", async e=>{
+        e.preventDefault(); if(App.state.submitted) return;
+        const ok = App.validation.allRequired(); if(!ok) return;
+        await App.submit(false);
+      });
+
+      $("#forceSubmit")?.addEventListener("click", async e=>{
+        e.preventDefault(); if(App.state.submitted) return;
+        await App.submit(true);
+      });
+
+      $$("input[name='AIUSE']").forEach(r=>r.addEventListener("change",App.validation.toggleSvc));
+    },
+
+    onNext(target, {skipValidation=false, guardId}){
+      if(!skipValidation){
+        const steps = App.state.steps;
+        const curId = steps[App.state.cur];
+
+        if(guardId==="next2" && $("#next2").disabled) return;
+
+        if(curId==="sec1" && !App.validation.section1()) return;
+        if(curId==="sec3" && !App.validation.section3()) return;
+        if(curId==="sec4" && !App.validation.section4()) return;
+        if(curId==="sec5" && !App.validation.section5()) return;
+        if(curId==="sec6" && !App.validation.section6()) return;
+        if(curId==="sec7" && !App.validation.section7()) return;
+      }
+
+      const steps = App.state.steps;
+      const curId = steps[App.state.cur];
+      const nextId = steps[Math.min(target,steps.length-1)];
+
+      // R1→R2 진입 시 중간 저장 (기존)
+      if(curId==="sec4" && nextId==="sec5"){ App.midSave(); }
+      // 섹션 전환마다 자동 임시 저장
+      if(curId !== nextId){ App.autoSaveDraft(); }
+
+      this.go(Math.min(target, steps.length-1));
+    },
+
+    go(i){
+      App.state.cur = i;
+      App.state.steps.forEach((id,k)=>$("#"+id).hidden = (k!==i));
+      $("#done").hidden = true;
+      App.navigation.updateStepUI();
+      if(i===3) App.validation.toggleSvc();
+      scrollTo({top:0,behavior:"smooth"});
+    },
+
+    updateStepUI(){
+      const {cur, steps} = App.state;
+      $("#bar").style.width = ((cur+1)/steps.length*100)+'%';
+      $("#stepLabel").textContent = `${cur+1} / ${steps.length}`;
+    }
+  },
+
+  validation:{
+    clear(scope=document){
+      $$("tr.warn", scope).forEach(tr=>tr.classList.remove("warn"));
+      $$("fieldset.warn", scope).forEach(fs=>fs.classList.remove("warn"));
+      $("#svcBlock")?.classList.remove("warn");
+      $$(".input.warn", scope).forEach(inp=>inp.classList.remove("warn"));
+      $(".light-group")?.classList.remove("warn");
+    },
+
+    section1(){
+     this.clear($("#sec1"));
+const ageEl = $("#age");
+      const genderOk = !!$("input[name='gender']:checked");
+      if(!genderOk){ $(".light-group")?.classList.add("warn"); alert("성별을 선택해 주세요."); return false; }
+      $(".light-group")?.classList.remove("warn");
+
+      const ageVal = ageEl.value.trim(); const ageOk = ageVal!=="" && +ageVal>=14 && +ageVal<=99;
+      if(!ageOk){ ageEl.classList.add("warn"); ageEl.setCustomValidity("나이는 14~99 사이의 숫자로 입력해 주세요."); ageEl.reportValidity(); return false; }
+      ageEl.classList.remove("warn"); ageEl.setCustomValidity("");
+      return true;
+    },
+
+    section3(){
+      App.validation.clear(document);
+      let ok = true;
+      const valRadio = (n)=>{ const e = $(`input[name='${n}']:checked`); return e?e.value:""; };
+
+      if(!valRadio("manip1")){
+        const fs1 = $$("fieldset").find(fs => fs.querySelector("input[name='manip1']"));
+        fs1 && fs1.classList.add("warn"); ok=false;
+      }
+
+      ["QUAL_MC","AUTH","ORIG","ORIG_MC","ATT","PI"].forEach(g=>{
+        const count = App.state.counters[g]||0;
+        for(let i=1;i<=count;i++){
+          const n = `${g}${i}`;
+          if(!valRadio(n)){ const tr = $(`tr[data-name='${n}']`); tr && tr.classList.add("warn"); ok=false; }
+        }
+      });
+
+      if(!ok){
+        const first = document.querySelector("tr.warn, fieldset.warn");
+        first?.scrollIntoView({behavior:"smooth", block:"center"});
+        alert("섹션 3의 미응답 항목을 완료해 주세요.");
+      }
+      return ok;
+    },
+
+    section4(){
+      this.clear($("#sec4"));
+      const missing = [];
+      const valRadio = (n)=>{ const e = document.querySelector(`input[name='${n}']:checked`); return e?e.value:""; };
+
+      COPY.aiLitItems.forEach((_,i)=>{
+        const name=`AILIT${i+1}`;
+        if(!valRadio(name)){
+          const tr = document.querySelector(`#aiLitBody tr:nth-child(${i+1})`);
+          tr && tr.classList.add("warn");
+          missing.push(tr);
+        }
+      });
+
+      const aiuse = valRadio("AIUSE");
+      if(!aiuse){
+        const fs = [...document.querySelectorAll("#sec4 fieldset")]
+          .find(fs=>fs.querySelector("input[name='AIUSE']"));
+        fs && fs.classList.add("warn"); missing.push(fs);
+      }else if(aiuse !== "1"){
+        const svc = document.querySelector("#svcBlock");
+        const checkedSvcs = $$("input[name='AIsvc']:checked");
+        if(checkedSvcs.length === 0){
+          if(svc && !svc.hidden){ svc.classList.add("warn"); missing.push(svc); }
+        }else{
+          const otherChecked = $("#svcOther")?.checked;
+          const otherText = $("#svcOtherText");
+          if(otherChecked){
+            const txt = (otherText?.value||"").trim();
+            if(!txt){
+              otherText?.classList.add("warn");
+              missing.push(otherText || svc);
+            }else{
+              otherText?.classList.remove("warn");
+            }
+          }
+          svc?.classList.remove("warn");
+        }
+      }
+
+      if(missing.length){
+        missing[0]?.scrollIntoView({behavior:"smooth", block:"center"});
+        alert("섹션 4의 미응답 항목을 완료해 주세요.");
+        return false;
+      }
+      return true;
+    },
+
+    section5(){
+      this.clear($("#sec5"));
+      const missing=[];
+      const val = n => document.querySelector(`input[name='${n}']:checked`);
+
+      ["R2_EXP_FACE","R2_EXP_ONLINE"].forEach(name=>{
+        if(!val(name)){
+          const fs = [...document.querySelectorAll("#sec5 fieldset")]
+            .find(fs=>fs.querySelector(`input[name='${name}']`));
+          fs && fs.classList.add("warn");
+          missing.push(fs);
+        }
+      });
+
+      COPY.r2s1AttItems.forEach((_,i)=>{
+        if(!val(`R2S1_ATT${i+1}`)){
+          const tr = document.querySelector(`#r2s1AttBody tr:nth-child(${i+1})`);
+          tr && tr.classList.add("warn");
+          missing.push(tr);
+        }
+      });
+
+      if(missing.length){
+        missing[0]?.scrollIntoView({behavior:"smooth", block:"center"});
+        alert("섹션 5의 미응답 항목을 완료해 주세요.");
+        return false;
+      }
+      return true;
+    },
+
+    section6(){
+      this.clear($("#sec6"));
+      const missing=[];
+      const val = n => document.querySelector(`input[name='${n}']:checked`);
+
+      COPY.r2s2Q1Items.forEach((_,i)=>{
+        if(!val(`R2S2_Q1_${i+1}`)){
+          const tr = document.querySelector(`#r2s2Q1Body tr:nth-child(${i+1})`);
+          tr && tr.classList.add("warn");
+          missing.push(tr);
+        }
+      });
+
+      COPY.r2s2Q2Items.forEach((_,i)=>{
+        if(!val(`R2S2_Q2_${i+1}`)){
+          const tr = document.querySelector(`#r2s2Q2Body tr:nth-child(${i+1})`);
+          tr && tr.classList.add("warn");
+          missing.push(tr);
+        }
+      });
+
+      if(missing.length){
+        missing[0]?.scrollIntoView({behavior:"smooth", block:"center"});
+        alert("섹션 6의 미응답 항목을 완료해 주세요.");
+        return false;
+      }
+      return true;
+    },
+
+    section7(){
+      this.clear($("#sec7"));
+      const missing=[];
+      const val = n => document.querySelector(`input[name='${n}']:checked`);
+
+      COPY.r2s2Q3Items.forEach((_,i)=>{
+        if(!val(`R2S2_Q3_${i+1}`)){
+          const tr = document.querySelector(`#r2s2Q3Body tr:nth-child(${i+1})`);
+          tr && tr.classList.add("warn");
+          missing.push(tr);
+        }
+      });
+
+      if(missing.length){
+        missing[0]?.scrollIntoView({behavior:"smooth", block:"center"});
+        alert("섹션 7의 미응답 항목을 완료해 주세요.");
+        return false;
+      }
+      return true;
+    },
+
+    toggleSvc(){
+      const v = $("input[name='AIUSE']:checked");
+      const hide = !v || v.value === "1";
+      const block = $("#svcBlock");
+      block.hidden = hide;
+
+      const other = $("#svcOther");
+      const otherText = $("#svcOtherText");
+
+      if(hide){
+        $$("input[name='AIsvc']:checked").forEach(c=>c.checked=false);
+        block.classList.remove("warn");
+        if(other){ other.checked = false; }
+        if(otherText){
+          otherText.value = "";
+          otherText.disabled = true;
+          otherText.classList.remove("warn");
+        }
+      }else{
+        if(otherText){
+          otherText.disabled = !($("#svcOther")?.checked);
+        }
+      }
+    },
+
+    allRequired(){
+      const valRadio = (n)=>{ const e = $(`input[name='${n}']:checked`); return e?e.value:""; };
+      const valChecks = (n)=>$$(`input[name='${n}']:checked`).map(x=>x.value);
+      const valAny = (n)=>{ const r=document.querySelector(`input[name='${n}']:checked`); if(r) return r.value; const h=document.querySelector(`input[name='${n}']`); return h?h.value:""; };
+
+      App.validation.clear(document);
+      const missing=[];
+
+      // 섹션1
+   const ageEl=$("#age");
+
+      const genderOk=!!$("input[name='gender']:checked");
+      if(!genderOk){ const gw=$(".light-group"); gw?.classList.add("warn"); missing.push({el:gw||$("#sec1")}); }
+
+      const ageVal=ageEl.value.trim(), ageOk=ageVal!=="" && +ageVal>=14 && +ageVal<=99;
+      if(!ageOk){ ageEl.classList.add("warn"); ageEl.setCustomValidity("나이는 14~99 사이의 숫자로 입력해 주세요."); ageEl.reportValidity(); missing.push({el:ageEl}); }
+      else { ageEl.classList.remove("warn"); ageEl.setCustomValidity(""); }
+
+      // 섹션3
+      if(!valRadio("manip1")){ const fs1=$$("fieldset").find(fs=>fs.querySelector("input[name='manip1']")); fs1&&fs1.classList.add("warn"); missing.push({el:fs1}); }
+      ["QUAL_MC","AUTH","ORIG","ORIG_MC","ATT","PI"].forEach(g=>{
+        const count=App.state.counters[g]||0;
+        for(let i=1;i<=count;i++){
+          const n=`${g}${i}`; if(!valRadio(n)){ const tr=$(`tr[data-name='${n}']`); tr&&tr.classList.add("warn"); missing.push({el:tr}); }
+        }
+      });
+
+      // 섹션4
+      COPY.aiLitItems.forEach((_,i)=>{ const name=`AILIT${i+1}`; if(!valRadio(name)){ const tr=$(`#aiLitBody tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+      if(!valRadio("AIUSE")){
+        const fs2=$$("fieldset").find(fs=>fs.querySelector("input[name='AIUSE']")); fs2&&fs2.classList.add("warn"); missing.push({el:fs2});
+      }else{
+        const aiuse=valRadio("AIUSE");
+        if(aiuse!=="1"){
+          const svc=$("#svcBlock");
+          const svcChosen=valChecks("AIsvc");
+          if(svcChosen.length===0){
+            if(svc && !svc.hidden) svc.classList.add("warn");
+            missing.push({el:svc||$("#sec4")});
+          }else{
+            const otherChecked = $("#svcOther")?.checked;
+            const otherText = $("#svcOtherText");
+            if(otherChecked){
+              const txt = (otherText?.value||"").trim();
+              if(!txt){
+                otherText?.classList.add("warn");
+                missing.push({el:otherText || svc});
+              }else{
+                otherText?.classList.remove("warn");
+              }
+            }
+            $("#svcBlock")?.classList.remove("warn");
+          }
+        }else { $("#svcBlock")?.classList.remove("warn"); }
+      }
+
+      // 섹션5
+      ["R2_EXP_FACE","R2_EXP_ONLINE"].forEach(name=>{
+        if(!$(`input[name='${name}']:checked`)){
+          const fs = $$("fieldset").find(fs=>fs.querySelector(`input[name='${name}']`));
+          fs && fs.classList.add("warn");
+          missing.push({el:fs});
+        }
+      });
+      COPY.r2s1AttItems.forEach((_,i)=>{ if(!valRadio(`R2S1_ATT${i+1}`)){ const tr=$(`#r2s1AttBody tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+
+      // 섹션6~7
+      COPY.r2s2Q1Items.forEach((_,i)=>{ if(!valRadio(`R2S2_Q1_${i+1}`)){ const tr=$(`#r2s2Q1Body tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+      COPY.r2s2Q2Items.forEach((_,i)=>{ if(!valRadio(`R2S2_Q2_${i+1}`)){ const tr=$(`#r2s2Q2Body tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+      COPY.r2s2Q3Items.forEach((_,i)=>{ if(!valRadio(`R2S2_Q3_${i+1}`)){ const tr=$(`#r2s2Q3Body tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+
+      // 섹션8(슬라이더/의향)
+      const body1 = $("#r2s3Q1Body"), body2 = $("#r2s3Q2Body");
+      COPY.r2s3Q1Items.forEach((_,i)=>{ const v=valAny(`R2S3_Q1_${i+1}`); if(!v){ const tr=body1.querySelectorAll("tr")[i]; tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+      COPY.r2s3Q2Items.forEach((_,i)=>{ const v=valAny(`R2S3_Q2_${i+1}`); if(!v){ const tr=body2.querySelectorAll("tr")[i]; tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+      COPY.r2s4Q1Items.forEach((_,i)=>{ if(!valRadio(`R2S4_Q1_${i+1}`)){ const tr=$(`#r2s4Q1Body tr:nth-child(${i+1})`); tr&&tr.classList.add("warn"); missing.push({el:tr}); } });
+
+      if(missing.length){
+        const first=missing[0].el; first?.scrollIntoView?.({behavior:"smooth", block:"center"});
+        alert(`미응답 문항이 ${missing.length}개 있습니다. 붉게 표시된 항목을 채워주세요.`);
+        return false;
+      }
+      return true;
+    }
+  },
+
+  payload(){
+    const valRadio = n => { const e = $(`input[name='${n}']:checked`); return e ? e.value : ""; };
+    const valChecks = n => $$(`input[name='${n}']:checked`).map(x=>x.value);
+    const valAny = n => { const r = document.querySelector(`input[name='${n}']:checked`); if (r) return r.value; const h = document.querySelector(`input[name='${n}']`); return h ? h.value : "" };
+
+    const { counters, SESSION_ID, chosen, watched95 } = App.state;
+
+    const QUAL_MC = Object.fromEntries(Array.from({length:counters.QUAL_MC||0},(_,i)=>[`QUAL_MC${i+1}`, valRadio(`QUAL_MC${i+1}`)]));
+    const AUTH    = Object.fromEntries(Array.from({length:counters.AUTH||0},   (_,i)=>[`AUTH${i+1}`,    valRadio(`AUTH${i+1}`)]));
+    const ORIG    = Object.fromEntries(Array.from({length:counters.ORIG||0},   (_,i)=>[`ORIG${i+1}`,    valRadio(`ORIG${i+1}`)]));
+    const ORIG_MC = Object.fromEntries(Array.from({length:counters.ORIG_MC||0},(_,i)=>[`ORIG_MC${i+1}`, valRadio(`ORIG_MC${i+1}`)]));
+    const ATT     = Object.fromEntries(Array.from({length:counters.ATT||0},    (_,i)=>[`ATT${i+1}`,     valRadio(`ATT${i+1}`)]));
+    const PI      = Object.fromEntries(Array.from({length:counters.PI||0},     (_,i)=>[`PI${i+1}`,      valRadio(`PI${i+1}`)]));
+
+    const section3Ordered = {};
+    section3Ordered.manipulation_seen = valRadio("manip1");
+    section3Ordered.QUAL_MC = QUAL_MC;
+    section3Ordered.ORIG_MC = ORIG_MC;
+    section3Ordered.AUTH    = AUTH;
+    section3Ordered.ORIG    = ORIG;
+    section3Ordered.ATT     = ATT;
+    section3Ordered.PI      = PI;
+
+    const R2 = {
+      S1: {
+        EXP_FACE: valRadio("R2_EXP_FACE"),
+        EXP_ONLINE: valRadio("R2_EXP_ONLINE"),
+        ATT: Object.fromEntries(COPY.r2s1AttItems.map((_,i)=>[`ATT${i+1}`, valRadio(`R2S1_ATT${i+1}`)]))
+      },
+      S2: {
+        Q1: Object.fromEntries(COPY.r2s2Q1Items.map((_,i)=>[`Q1_${i+1}`, valRadio(`R2S2_Q1_${i+1}`)])),
+        Q2: Object.fromEntries(COPY.r2s2Q2Items.map((_,i)=>[`Q2_${i+1}`, valRadio(`R2S2_Q2_${i+1}`)])),
+        Q3: Object.fromEntries(COPY.r2s2Q3Items.map((_,i)=>[`Q3_${i+1}`, valRadio(`R2S2_Q3_${i+1}`)]))
+      },
+      S3: {
+        Q1: Object.fromEntries(COPY.r2s3Q1Items.map((_,i)=>[`Q1_${i+1}`, valAny(`R2S3_Q1_${i+1}`)])),
+        Q2: Object.fromEntries(COPY.r2s3Q2Items.map((_,i)=>[`Q2_${i+1}`, valAny(`R2S3_Q2_${i+1}`)]))
+      },
+      S4: { Q1: Object.fromEntries(COPY.r2s4Q1Items.map((_,i)=>[`Q1_${i+1}`, valRadio(`R2S4_Q1_${i+1}`)])) }
+    };
+
+    return {
+      meta:{
+        session_id: SESSION_ID, user_agent: navigator.userAgent, client_time_iso: new Date().toISOString(),
+        picked_code: chosen?.code, picked_file: chosen?.file, picked_label: chosen?.label,
+        video_watched_95: watched95
+      },
+      section1:{ student_id: "", gender: valRadio("gender"), age: $("#age").value },
+      section3: section3Ordered,
+      section4:{
+        AILIT: Object.fromEntries(COPY.aiLitItems.map((_, i) => [`AILIT${i+1}`, valRadio(`AILIT${i+1}`)])),
+        AIUSE: valRadio("AIUSE"),
+        AIsvc: valChecks("AIsvc"),
+        AIsvc_other_text: ($("#svcOther")?.checked ? ($("#svcOtherText")?.value||"").trim() : "")
+      },
+      research2: R2
+    };
+  },
+
+  /* ====== 자동 임시 저장 (서버 + 로컬) ====== */
+  async autoSaveDraft(){
+    if (this.state.submitted) return;
+    if (!this.state.dirty) return;
+
+    const payload = this.payload();
+    const data = { phase: "AUTO_DRAFT", ...payload };
+
+    // 서버로 비차단 전송 (실패해도 조용히)
+    try{ await postJSON(BACKEND_URL, data, {timeoutMs:5000, retries:0}); }catch(_){}
+    // 로컬에도 저장
+    this.saveLocalDraft(payload);
+    // dirty 유지(사용자 재편집 흔적 보존). 성공 시만 끄고 싶다면 아래 주석 해제
+    // this.state.dirty = false;
+  },
+
+  saveLocalDraft(payload){
+    try{ localStorage.setItem("survey_draft_v1", JSON.stringify(payload)); }catch(_){}
+  },
+
+  restoreLocalDraft(){
+    try{
+      const raw = localStorage.getItem("survey_draft_v1");
+      if (!raw) return;
+      if (!confirm("임시 저장된 응답이 있습니다. 불러오겠습니까?")) return;
+
+      const draft = JSON.parse(raw);
+      const flat = (()=>{
+        const out = {};
+        const walk = (prefix, obj)=>{
+          if (obj && typeof obj === 'object' && !Array.isArray(obj)){
+            for (const [k,v] of Object.entries(obj)){
+              walk(prefix ? `${prefix}.${k}` : k, v);
+            }
+          }else{
+            out[prefix] = obj;
+          }
+        };
+        walk('', draft);
+        return out;
+      })();
+
+      // name/value 기반으로 간단 복구 (라디오/체크/텍스트)
+      Object.entries(flat).forEach(([key, val])=>{
+        // key는 payload 구조 경로라서, 실제 input name으로 바로 매칭되는 항목만 복구
+        // 주요 name들만 시도
+        const names = [key];
+        names.forEach(name=>{
+          // 라디오/체크
+          const opt = document.querySelector(`[name="${name}"][value="${val}"]`);
+          if (opt && (opt.type === 'radio' || opt.type === 'checkbox')) { opt.checked = true; return; }
+          // 텍스트 계열
+          const el = document.querySelector(`[name="${name}"], #${name}`);
+          if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) { el.value = val ?? ''; }
+        });
+      });
+
+      // 드래프트 복구 후 dirty 표시
+      this.state.dirty = true;
+    }catch(_){}
+  },
+
+  async midSave(){
+    if (App.state.midSaved) return;
+    const hint = $("#midSaveHint");
+    try{
+      hint.textContent = "연구 1 응답 중간 저장 중…";
+      const payload = App.payload();
+      const r1Only = {
+        phase: "R1_INTERIM",
+        meta: payload.meta,
+        section1: payload.section1,
+        section3: payload.section3,
+        section4: {
+          AILIT: payload.section4.AILIT,
+          AIUSE: payload.section4.AIUSE,
+          AIsvc: payload.section4.AIsvc,
+          AIsvc_other_text: payload.section4.AIsvc_other_text
+        }
+      };
+      const res = await postJSON(BACKEND_URL, r1Only);
+      if(res.ok){ hint.textContent = "연구 1 응답이 안전하게 저장되었습니다."; App.state.midSaved = true; }
+      else { hint.textContent = "중간 저장 실패: 네트워크 상태를 확인해 주세요. (최종 제출은 계속 가능합니다)"; }
+    }catch(e){
+      hint.textContent = "중간 저장 실패: 네트워크 상태를 확인해 주세요. (최종 제출은 계속 가능합니다)";
+    }
+  },
+
+  async submit(force=false){
+    // 제출 시작: 이탈 경고 해제/dirty 해제
+    this.state.submitted = true;
+    this.state.dirty = false;
+
+    $("#submitBtn").disabled = true;
+    App.ui.submitStatus(force ? "강제 제출 중…" : "제출 중입니다. 제출 완료가 될 때까지 잠시만 기다려주세요.", false);
+
+    const payload = App.payload();
+
+    // 마지막 찬스: sendBeacon으로 백업 전송
+    try{
+      const body = "data=" + encodeURIComponent(JSON.stringify({
+        phase: force ? "R2_FORCE_BEACON" : "R2_SUBMIT_BEACON",
+        ...payload
+      }));
+      const blob = new Blob([body], {type: "application/x-www-form-urlencoded;charset=UTF-8"});
+      navigator.sendBeacon?.(BACKEND_URL, blob);
+    }catch(_){}
+
+    // 정식 제출
+    const result  = await postJSON(BACKEND_URL, payload);
+
+    if(result.ok){
+      const serverText = result.json?.message || result.json?.status || "서버 저장 성공";
+      App.ui.submitStatus("제출이 완료되었습니다.", true);
+      App.state.steps.forEach(id=>$("#"+id).hidden=true);
+      $("#done").hidden=false;
+      $("#bar").style.width="100%";
+      $("#stepLabel").textContent="완료";
+      $("#serverMsg").textContent = `서버 응답: ${serverText}${result.json?.id ? " (id: "+result.json.id+")" : ""}`;
+      const dump = $("#dump"); if(dump){ dump.textContent=""; dump.setAttribute("hidden","true"); }
+
+      // 제출 성공 시 로컬 임시 저장 제거
+      try{ localStorage.removeItem("survey_draft_v1"); }catch(_){}
+      scrollTo({top:0,behavior:"smooth"});
+    }else{
+      // 제출 실패: 다시 편집 가능하게 복구
+      App.ui.submitStatus(force ? "서버 전송 실패" : "서버 전송에 실패했습니다. 네트워크를 확인 후 다시 시도해 주세요.", false);
+      alert("전송 실패: " + (result.error||"알 수 없는 오류"));
+      $("#submitBtn").disabled = false;
+      App.state.submitted = false;
+      App.state.dirty = true;
+    }
+  },
+
+  ui:{
+    submitStatus(msg, ok=false){
+      const curId = App.state.steps[App.state.cur];
+      const s = document.querySelector(`#${curId} .submitStatus`);
+      if(!s) return;
+      s.textContent = msg;
+      s.className = ok ? "submitStatus ok" : "submitStatus err";
+    }
+  },
+
+  features:{ apply(){ if(!FEATURES.SHOW_FORCE){ $$("[data-force], #forceSubmit").forEach(el => el.style.display="none"); } } },
+
+  formPrefill(){
+    const age=$("#age"); age?.addEventListener("focus",()=>{ if(!age.value) age.value=20; }, {once:true});
+  }
+};
+
+// 초기화 후 로컬 드래프트 복구 안내
+document.addEventListener("DOMContentLoaded", ()=>{
+  App.init();
+  // 렌더 이후에 복구 시도 (입력 요소 존재 보장)
+  App.restoreLocalDraft();
+});
+</script>
+</body>
+</html>
